@@ -152,6 +152,10 @@
   }
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   /* Variables imported from layout.tsx > @aragon/gov-ui-kit */
   color: var(--guk-color-neutral-800);
