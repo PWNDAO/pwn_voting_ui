@@ -16,7 +16,7 @@ interface INavLinkProps extends INavLink {
 export const NavLink: React.FC<INavLinkProps> = (props) => {
   const { id, name, path, onClick, isExternal } = props;
   const { asPath } = useRouter();
-  const pathToCheck = asPath === "/" ? "/#/community-voting" : asPath;
+  const pathToCheck = asPath === "/" ? "/#/stewards" : asPath;
   const isSelected = pathToCheck.includes(path);
 
   const anchorClasses = classNames(

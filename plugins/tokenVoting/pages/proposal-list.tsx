@@ -21,6 +21,8 @@ import { useChainIdTypesafe } from "@/utils/chains";
 
 const DEFAULT_PAGE_SIZE = 6;
 
+const img = "/images/empty.png";
+
 export default function Proposals() {
   const { isConnected } = useAccount();
   const canCreate = useCanCreateProposal();
@@ -73,7 +75,7 @@ export default function Proposals() {
 
       <If not={proposalCount}>
         <Then>
-          <MissingContentView>
+          <MissingContentView img={img}>
             No proposals have been created yet. Here you will see the available proposals.{" "}
             <If true={canCreate}>Create your first proposal.</If>
           </MissingContentView>

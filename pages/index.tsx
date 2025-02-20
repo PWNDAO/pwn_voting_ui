@@ -15,7 +15,7 @@ const PluginLoader: FC = () => {
     let pluginIdOrDefault;
     if (asPath === "/" || asPath.startsWith("/#/")) {
       if (asPath === "/" || asPath === "/#/") {
-        router.push("/#/community-voting/");
+        router.push("/#/stewards/");
         return;
       } else {
         pluginIdOrDefault = asPath.split("/")[2]; // ["", "#", "[plugin_name]"]

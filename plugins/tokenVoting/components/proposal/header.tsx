@@ -66,10 +66,10 @@ const ProposalHeader: React.FC<ProposalHeaderProps> = ({ proposalIdx, proposal }
                   <span className="text-neutral-500">The voting period is over</span>
                 </ElseIf>
                 <Else>
-                  <span className="text-neutral-500">Active for </span>
                   <span className="text-neutral-800">
                     {getSimpleRelativeTimeFromDate(dayjs(Number(proposal.parameters.endDate) * 1000))}
                   </span>
+                  <span className="text-neutral-500"> time left</span>
                 </Else>
               </If>
             </div>

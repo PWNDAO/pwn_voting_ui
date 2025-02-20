@@ -5,7 +5,7 @@ export function getTagVariantFromStatus(status: ProposalStatus | undefined): Tag
     case ProposalStatus.ACCEPTED:
       return "success";
     case ProposalStatus.ACTIVE:
-      return "info";
+      return "primary";
     case ProposalStatus.CHALLENGED:
       return "warning";
     case ProposalStatus.DRAFT:

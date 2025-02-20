@@ -82,6 +82,7 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
             voteAmount: formatEther(proposal?.vetoTally || BigInt(0)),
             votePercentage: vetoPercentage,
             tokenSymbol: tokenSymbol || PUB_TOKEN_SYMBOL,
+            vetoAmount: formatEther(proposal?.parameters.minVetoVotingPower || BigInt(0)),
           },
         ],
         proposalId: proposalIdx.toString(),

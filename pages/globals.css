@@ -132,7 +132,8 @@
     --white-color: 243 241 255; /* f3f1ff */
 
     --guk-color-info-200: #f3f1ff; /* 105 102 120; */
-    --guk-color-info-500: #f3f1ff;
+    /* --guk-color-info-500: #f3f1ff; */
+    --guk-color-info-500: rgb(var(--guk-color-primary-500) / var(--tw-bg-opacity, 1));
     --guk-color-info-800: #111111; /* 17 17 17; */
 
     --tw-text-opacity: 1;
@@ -292,4 +293,9 @@ label div p.leading-tight {
 
 nav[aria-label="Breadcrumbs"] > div.text-critical-800 {
   color: var(--guk-color-neutral-0);
+}
+
+.customStewardsProposalCardWrapper .bg-info-200 {
+  background-color: rgb(var(--guk-color-primary-50) / var(--tw-bg-opacity, 1)) !important; 
+  color: rgb(var(--guk-color-primary-400) / var(--tw-text-opacity, 1)) !important;
 }

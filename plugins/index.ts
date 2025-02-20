@@ -9,13 +9,13 @@ type PluginItem = {
 
 export const plugins: PluginItem[] = [
   {
-    id: "community-voting",
-    folderName: "tokenVoting",
-    title: "Community",
-  },
-  {
     id: "stewards",
     folderName: "optimistic-proposals",
     title: "Stewards",
+  },
+  {
+    id: "community-voting",
+    folderName: "tokenVoting",
+    title: "Community",
   },
 ];

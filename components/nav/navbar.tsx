@@ -49,7 +49,7 @@ export const Navbar: React.FC = () => {
       <nav className="font-screener sticky top-0 z-[var(--hub-navbar-z-index)] flex h-20 w-full select-none items-center justify-center bg-neutral-0 p-6">
         <div className="m-auto flex h-[90%] w-[100%] max-w-[100%] items-center justify-between gap-2 md:gap-8 lg:h-[95%]">
           <Link
-            href="/#/community-voting"
+            href="/#/stewards"
             className={classNames(
               "flex items-center gap-x-5 pt-1.5",
               "outline-none focus:outline-none focus-visible:ring focus-visible:ring-primary focus-visible:ring-offset" // focus styles

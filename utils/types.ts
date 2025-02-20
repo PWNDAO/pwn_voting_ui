@@ -58,7 +58,7 @@ export interface IBreakdownApprovalThresholdResult extends IApprovalThresholdRes
 }
 
 export interface IBreakdownMajorityVotingResult {
-  votingScores: { option: string; voteAmount: string; votePercentage: number; tokenSymbol: string }[];
+  votingScores: { option: string; voteAmount: string; votePercentage: number; tokenSymbol: string, vetoAmount?: string }[];
   cta?: VotingCta;
   proposalId: string;
 }

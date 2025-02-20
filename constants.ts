@@ -1,6 +1,6 @@
-import { Address } from "viem";
-import { ChainId, getAppKitChain } from "./utils/chains";
-import { AppKitNetwork } from "@reown/appkit/networks";
+import { type Address } from "viem";
+import { type ChainId, getAppKitChain } from "./utils/chains";
+import { type AppKitNetwork } from "@reown/appkit/networks";
 
 export type ContractAddressRegistry = Record<ChainId, Address>;
 

@@ -7,7 +7,7 @@ import { type VotingCta } from "./types";
 type Choice = "yes" | "no" | "abstain";
 
 export interface IBreakdownMajorityVotingResult {
-  votingScores: { option: string; voteAmount: string; votePercentage: number; tokenSymbol: string }[];
+  votingScores: { option: string; voteAmount: string; votePercentage: number; tokenSymbol: string; vetoAmount?: string }[];
   cta?: VotingCta;
   status?: ProposalStatus;
 }
@@ -62,9 +62,17 @@ export const BreakdownMajorityVotingResult: React.FC<IBreakdownMajorityVotingRes
                 {choice.option}
               </span>
               <Progress value={choice.votePercentage} className={choiceClassNames[choice.option as Choice]} />
-              <div className="flex gap-x-1">
-                <span className="text-neutral-800">{choice.voteAmount}</span>
-                <span className="text-neutral-500">{choice.tokenSymbol}</span>
+              <div className="flex gap-x-1 justify-between">
+                <div className="flex gap-x-1">
+                  <span className="text-neutral-800">{choice.voteAmount}</span>
+                  <span className="text-neutral-500">{choice.tokenSymbol}</span>
+                </div>
+                {choice.vetoAmount && (
+                  <div className="flex gap-x-1">
+                    <span className="text-neutral-800">{choice.vetoAmount}</span>
+                    <span className="text-neutral-500">{choice.tokenSymbol}</span>
+                  </div>
+                )}
               </div>
             </div>
             {index < votingScores.length - 1 && <div className="h-0.25 bg-neutral-100 md:h-auto md:w-0.25" />}
