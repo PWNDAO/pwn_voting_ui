@@ -22,8 +22,8 @@ export default function AragonetteApp({ Component, pageProps }: any) {
 
         <meta property="og:title" content="PWN DAO Governance" />
         <meta name="twitter:title" content="PWN DAO Governance" />
-        <meta name="twitter:image" content="https://pwn.xyz/og-card.png" />
-        <meta property="og:image" content="https://pwn.xyz/og-card.png" />
+        <meta name="twitter:image" content="https://pwn.xyz/pwn-og.jpg" />
+        <meta property="og:image" content="https://pwn.xyz/pwn-og.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:creator" content="@pwndao" />
         <meta name="twitter:site" content="@pwndao" />
