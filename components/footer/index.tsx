@@ -1,4 +1,4 @@
-import { PUB_APP_NAME, PUB_FORUM_URL, PUB_PROJECT_URL } from "@/constants";
+import { PUB_APP_NAME, PUB_PROJECT_URL } from "@/constants";
 
 export const Footer = () => {
   return (
@@ -51,16 +51,6 @@ export const Footer = () => {
           <li className="group py-4 md:py-0">
             <a className="overflow-hidden" href="https://staking.pwn.xyz" target="_blank">
               <span className="line-clamp-1 leading-tight text-neutral-500 group-hover:text-primary-400">Stake</span>
-            </a>
-          </li>
-          <li className="group py-4 md:py-0">
-            <a className="overflow-hidden" href={PUB_FORUM_URL} target="_blank">
-              <span className="line-clamp-1 leading-tight text-neutral-500 group-hover:text-primary-400">Forum</span>
-            </a>
-          </li>
-          <li className="group py-4 md:py-0">
-            <a className="overflow-hidden" href="https://linktr.ee/pwndao" target="_blank">
-              <span className="line-clamp-1 leading-tight text-neutral-500 group-hover:text-primary-400">Links</span>
             </a>
           </li>
         </ul>

@@ -30,12 +30,6 @@ export const Navbar: React.FC = () => {
       path: "https://staking.pwn.xyz",
       isExternal: true,
     },
-    {
-      id: "forumUi",
-      name: "Forum",
-      path: "https://forum.pwn.xyz",
-      isExternal: true,
-    },
     //{
     //  id: 'linktree',
     //  name: 'Linktree',

@@ -2,6 +2,7 @@
   "name": "aragonette",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.2.5",
   "scripts": {
     "dev": "APP_ENV=development.local next dev --port 8080",
     "build-prod-local": "NODE_ENV=production APP_ENV=production.local next build",
@@ -86,6 +87,6 @@
     ]
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "24.x"
   }
 }

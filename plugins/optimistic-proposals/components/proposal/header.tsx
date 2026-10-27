@@ -1,4 +1,4 @@
-import { AvatarIcon, Breadcrumbs, Heading, IBreadcrumbsLink, IconType, ProposalStatus, Tag } from "@aragon/gov-ui-kit";
+import { AvatarIcon, Breadcrumbs, Heading, IBreadcrumbsLink, IconType, ProposalStatus } from "@aragon/gov-ui-kit";
 import { Publisher } from "@/components/publisher";
 import { OptimisticProposal } from "@/plugins/optimistic-proposals/utils/types";
 import { useProposalStatus } from "@/plugins/optimistic-proposals/hooks/useProposalVariantStatus";
@@ -8,9 +8,7 @@ import dayjs from "dayjs";
 import { HeaderSection } from "@/components/layout/header-section";
 import { getTagVariantFromStatus } from "@/utils/ui-variants";
 import { capitalizeFirstLetter } from "@/utils/text";
-
-const DEFAULT_PROPOSAL_TITLE = "(No proposal title)";
-const DEFAULT_PROPOSAL_SUMMARY = "(No proposal summary)";
+import { getProposalSummary, getProposalTitle } from "@/utils/proposal-display";
 
 interface ProposalHeaderProps {
   proposalIdx: number;
@@ -21,7 +19,10 @@ const ProposalHeader: React.FC<ProposalHeaderProps> = ({ proposalIdx, proposal }
   const proposalStatus = useProposalStatus(proposal);
   const tagVariant = getTagVariantFromStatus(proposalStatus);
 
-  const breadcrumbs: IBreadcrumbsLink[] = [{ label: "Proposals", href: "#/" }, { label: proposalIdx.toString() }];
+  const breadcrumbs: IBreadcrumbsLink[] = [
+    { label: "Stewards proposals", href: "#/stewards" },
+    { label: `#${proposalIdx + 1}` },
+  ];
   const endDateIsInThePast = Number(proposal.parameters.endDate) * 1000 < Date.now();
 
   return (
@@ -40,19 +41,21 @@ const ProposalHeader: React.FC<ProposalHeaderProps> = ({ proposalIdx, proposal }
         {/* Title & description */}
         <div className="flex w-full flex-col gap-y-2">
           <div className="flex w-full items-center gap-x-4">
-            <Heading size="h1">{proposal.title || DEFAULT_PROPOSAL_TITLE}</Heading>
+            <Heading size="h1">{getProposalTitle(proposal.title, proposalIdx, "Stewards")}</Heading>
           </div>
-          <p className="text-lg leading-normal text-neutral-500">{proposal.summary || DEFAULT_PROPOSAL_SUMMARY}</p>
+          <p className="text-lg leading-normal text-neutral-500">{getProposalSummary(proposal)}</p>
         </div>
         {/* Metadata */}
         <div className="flex flex-wrap gap-x-10 gap-y-2">
+          {proposal.creator && (
+            <div className="flex items-center gap-x-2">
+              <AvatarIcon icon={IconType.APP_MEMBERS} size="sm" variant="primary" />
+              <Publisher publisher={[{ address: proposal.creator }]} />
+            </div>
+          )}
           <div className="flex items-center gap-x-2">
             <AvatarIcon icon={IconType.APP_MEMBERS} size="sm" variant="primary" />
-            <Publisher publisher={[{ address: proposal.creator }]} />
-          </div>
-          <div className="flex items-center gap-x-2">
-            <AvatarIcon icon={IconType.APP_MEMBERS} size="sm" variant="primary" />
-            <div className="flex gap-x-1 text-base leading-tight ">
+            <div className="flex gap-x-1 text-base leading-tight">
               <If val={proposalStatus} is={ProposalStatus.VETOED}>
                 <Then>
                   <span className="text-neutral-500">The proposal has been defeated</span>
