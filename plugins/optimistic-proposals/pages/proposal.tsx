@@ -1,6 +1,5 @@
-import type { useProposal } from "@/plugins/optimistic-proposals/hooks/useProposal";
 import ProposalHeader from "@/plugins/optimistic-proposals/components/proposal/header";
-import { PleaseWaitSpinner } from "@/components/please-wait";
+import { ProposalLoadState } from "@/components/proposal/proposalLoadState";
 import { useProposalVeto } from "@/plugins/optimistic-proposals/hooks/useProposalVeto";
 import { useProposalExecute } from "@/plugins/optimistic-proposals/hooks/useProposalExecute";
 import { BodySection } from "@/components/proposal/proposalBodySection";
@@ -16,6 +15,7 @@ import { useToken } from "../hooks/useToken";
 import { ProposalStatus } from "@aragon/gov-ui-kit";
 import { PUB_TOKEN_SYMBOL } from "@/constants";
 import { useGovernanceSettings } from "../hooks/useGovernanceSettings";
+import { ProposalDetails } from "@/components/proposal/proposalDetails";
 
 export default function ProposalDetail({ index: proposalIdx }: { index: number }) {
   const {
@@ -35,11 +35,10 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
   const startDate = dayjs(Number(proposal?.parameters.startDate) * 1000).toString();
   const endDate = dayjs(Number(proposal?.parameters.endDate) * 1000).toString();
 
-  const showProposalLoading = getShowProposalLoading(proposal, proposalFetchStatus);
   const proposalStatus = useProposalStatus(proposal!);
   let vetoPercentage = 0;
   if (proposal?.vetoTally && proposal.parameters.minVetoVotingPower) {
-    vetoPercentage = Number(proposal.vetoTally / (proposal.parameters.minVetoVotingPower / 100n));
+    vetoPercentage = Number((proposal.vetoTally * 10_000n) / proposal.parameters.minVetoVotingPower) / 100;
   }
 
   let cta: IBreakdownMajorityVotingResult["cta"];
@@ -98,10 +97,10 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
     },
   ];
 
-  if (!proposal || showProposalLoading) {
+  if (!proposal) {
     return (
-      <section className="justify-left items-left flex w-screen min-w-full max-w-full">
-        <PleaseWaitSpinner />
+      <section className="mx-auto w-full max-w-screen-xl px-4 py-10 md:px-16">
+        <ProposalLoadState error={proposalFetchStatus.proposalError} />
       </section>
     );
   }
@@ -113,30 +112,34 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
       <div className="mx-auto w-full max-w-screen-xl px-4 py-6 md:px-16 md:pb-20 md:pt-10">
         <div className="flex w-full flex-col gap-x-12 gap-y-6 md:flex-row">
           <div className="flex flex-col gap-y-6 md:w-[63%] md:shrink-0">
-            <BodySection body={proposal.description || "No description was provided"} />
+            <BodySection body={proposal.description} isLoading={proposalFetchStatus.metadataLoading} />
             <ProposalVoting
               stages={proposalStage}
               description="Proposals proposed by the Stewards become eventually executable, unless the community reaches the veto threshold during the community veto stage."
               isVeto={true}
             />
-            <ProposalActions actions={proposal.actions} />
+            <ProposalActions
+              actions={proposal.actions}
+              description={
+                proposal.executed
+                  ? "These actions were executed by the DAO when this proposal passed."
+                  : "These are the on-chain actions included in this proposal."
+              }
+            />
           </div>
           <div className="flex flex-col gap-y-6 md:w-[33%]">
-            <CardResources resources={proposal.resources} title="Resources" />
+            <ProposalDetails
+              index={proposalIdx}
+              group="Stewards"
+              creator={proposal.creator}
+              startDate={proposal.parameters.startDate}
+              endDate={proposal.parameters.endDate}
+              actionCount={proposal.actions.length}
+            />
+            {proposal.resources.length > 0 && <CardResources resources={proposal.resources} title="Resources" />}
           </div>
         </div>
       </div>
     </section>
   );
-}
-
-function getShowProposalLoading(
-  proposal: ReturnType<typeof useProposal>["proposal"],
-  status: ReturnType<typeof useProposal>["status"]
-) {
-  if (!proposal && status.proposalLoading) return true;
-  else if (status.metadataLoading && !status.metadataError) return true;
-  else if (!proposal?.title && !status.metadataError) return true;
-
-  return false;
 }

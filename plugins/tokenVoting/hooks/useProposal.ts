@@ -1,24 +1,12 @@
-import { useState, useEffect } from "react";
-import { useBlockNumber, usePublicClient, useReadContract } from "wagmi";
-import { Hex, fromHex, getAbiItem } from "viem";
+import { useEffect } from "react";
+import { useBlockNumber, useReadContract } from "wagmi";
+import { getAbiItem } from "viem";
 import { TokenVotingPluginAbi } from "@/plugins/tokenVoting/artifacts/TokenVoting.sol";
 import { RawAction, ProposalMetadata } from "@/utils/types";
 import { Proposal, ProposalParameters, Tally } from "../utils/types";
 import { PUB_TOKEN_VOTING_PLUGIN_ADDRESS } from "@/constants";
-import { useMetadata } from "@/hooks/useMetadata";
+import { useProposalMetadata } from "@/hooks/useProposalMetadata";
 import { useChainIdTypesafe } from "@/utils/chains";
-
-type ProposalCreatedLogResponse = {
-  args: {
-    actions: RawAction[];
-    allowFailureMap: bigint;
-    creator: string;
-    endDate: bigint;
-    startDate: bigint;
-    metadata: string;
-    proposalId: bigint;
-  };
-};
 
 const ProposalCreatedEvent = getAbiItem({
   abi: TokenVotingPluginAbi,
@@ -26,9 +14,6 @@ const ProposalCreatedEvent = getAbiItem({
 });
 
 export function useProposal(proposalId: number, autoRefresh = false) {
-  const publicClient = usePublicClient();
-  const [proposalCreationEvent, setProposalCreationEvent] = useState<ProposalCreatedLogResponse["args"]>();
-  const [metadataUri, setMetadataUri] = useState<string>();
   const { data: blockNumber } = useBlockNumber();
   const chainId = useChainIdTypesafe();
 
@@ -51,39 +36,17 @@ export function useProposal(proposalId: number, autoRefresh = false) {
     if (autoRefresh) proposalRefetch();
   }, [blockNumber, chainId]);
 
-  // Creation event
-  useEffect(() => {
-    if (!proposalData || !publicClient) return;
-
-    publicClient
-      .getLogs({
-        address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
-        event: ProposalCreatedEvent,
-        args: {
-          proposalId: BigInt(proposalId),
-        },
-        // TODO can we somehow easier narrow down the range of blocks where to search?
-        fromBlock: BigInt(0),
-        toBlock: "latest",
-      })
-      .then((logs) => {
-        if (!logs || !logs.length) throw new Error("No creation logs");
-
-        const log: ProposalCreatedLogResponse = logs[0] as any;
-        setProposalCreationEvent(log.args);
-        setMetadataUri(fromHex(log.args.metadata as Hex, "string"));
-      })
-      .catch((err) => {
-        console.error(`Could not fetch the proposal details for proposal id == ${proposalId}.`, err);
-      });
-  }, [proposalData?.tally.yes, proposalData?.tally.no, proposalData?.tally.abstain, !!publicClient, chainId]);
-
-  // JSON metadata
   const {
+    creationEvent: proposalCreationEvent,
     data: metadataContent,
     isLoading: metadataLoading,
     error: metadataError,
-  } = useMetadata<ProposalMetadata>(metadataUri);
+  } = useProposalMetadata({
+    address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
+    chainId,
+    event: ProposalCreatedEvent,
+    proposalId: BigInt(proposalId),
+  });
 
   const proposal = arrangeProposalData(proposalData, proposalCreationEvent, metadataContent);
 
@@ -95,7 +58,7 @@ export function useProposal(proposalId: number, autoRefresh = false) {
       proposalError,
       metadataReady: !metadataError && !metadataLoading && !!metadataContent,
       metadataLoading,
-      metadataError: metadataError !== undefined,
+      metadataError: !!metadataError,
     },
   };
 }
@@ -117,7 +80,7 @@ function decodeProposalResultData(data?: Array<any>) {
 
 function arrangeProposalData(
   proposalData?: ReturnType<typeof decodeProposalResultData>,
-  creationEvent?: ProposalCreatedLogResponse["args"],
+  creationEvent?: { creator: string },
   metadata?: ProposalMetadata
 ): Proposal | null {
   if (!proposalData) return null;

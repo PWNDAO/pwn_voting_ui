@@ -41,7 +41,7 @@ export default function Proposals() {
     functionName: "proposalCount",
     chainId,
   });
-  const proposalCount = Number(proposalCountResponse);
+  const proposalCount = Number(proposalCountResponse ?? 0n);
 
   useEffect(() => {
     refetch();
@@ -61,9 +61,10 @@ export default function Proposals() {
   return (
     <MainSection narrow>
       <SectionView>
-        <h1 className="line-clamp-1 flex flex-1 shrink-0 text-2xl font-normal leading-tight text-neutral-800 md:text-3xl">
-          Community Proposals
-        </h1>
+        <div className="flex flex-col gap-y-2">
+          <h1 className="text-2xl font-normal leading-tight text-neutral-800 md:text-3xl">Community Proposals</h1>
+          <p className="text-sm leading-relaxed text-neutral-500">Community decisions and their voting results.</p>
+        </div>
         <div className="justify-self-end">
           <Link href="#/community-voting/new">
             <Button disabled={!isConnected || !canCreate} iconLeft={IconType.PLUS} size="md" variant="secondary">
@@ -73,7 +74,7 @@ export default function Proposals() {
         </div>
       </SectionView>
 
-      <If not={proposalCount}>
+      <If true={!isLoading && !isError && !proposalCount}>
         <Then>
           <MissingContentView img={img}>
             No proposals have been created yet. Here you will see the available proposals.{" "}
@@ -97,7 +98,7 @@ export default function Proposals() {
                     <ProposalCard key={proposalIndex} proposalIndex={proposalIndex} />
                   ))}
             </DataListContainer>
-            <DataListPagination />
+            {proposalCount > DEFAULT_PAGE_SIZE && <DataListPagination />}
           </DataListRoot>
         </Else>
       </If>
@@ -106,5 +107,5 @@ export default function Proposals() {
 }
 
 function SectionView({ children }: { children: ReactNode }) {
-  return <div className="flex w-full flex-row content-center justify-between">{children}</div>;
+  return <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">{children}</div>;
 }

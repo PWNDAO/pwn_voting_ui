@@ -5,6 +5,7 @@ import { VetoCastEvent } from "@/plugins/optimistic-proposals/utils/types";
 import { usePublicClient } from "wagmi";
 import { PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS } from "@/constants";
 import { useChainIdTypesafe } from "@/utils/chains";
+import { getProposalEventArgs } from "@/utils/proposal-events";
 
 const event = getAbiItem({
   abi: OptimisticTokenVotingPluginAbi,
@@ -19,20 +20,17 @@ export function useProposalVetoes(proposalId?: bigint) {
   useEffect(() => {
     if (proposalId === undefined || !publicClient) return;
 
-    publicClient
-      .getLogs({
-        address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
-        event: event,
-        args: {
-          proposalId,
-        },
-        fromBlock: BigInt(0),
-        toBlock: "latest",
-      })
+    getProposalEventArgs<VetoCastEvent>({
+      publicClient,
+      chainId,
+      event,
+      address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
+      proposalId,
+    })
       .then((logs) => {
-        const newLogs = logs.flatMap((log) => log.args as VetoCastEvent);
-        if (newLogs.length > proposalLogs.length) setLogs(newLogs);
-      });
+        if (logs.length > proposalLogs.length) setLogs(logs);
+      })
+      .catch((error) => console.error(`Could not fetch vetoes for proposal ${proposalId}.`, error));
   }, [proposalId, chainId]);
 
   return proposalLogs;

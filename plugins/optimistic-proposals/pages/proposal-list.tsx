@@ -39,7 +39,7 @@ export default function Proposals() {
     functionName: "proposalCount",
     chainId,
   });
-  const proposalCount = Number(proposalCountResponse);
+  const proposalCount = Number(proposalCountResponse ?? 0n);
 
   useEffect(() => {
     refetch();
@@ -59,9 +59,12 @@ export default function Proposals() {
   return (
     <MainSection narrow>
       <SectionView>
-        <h1 className="line-clamp-1 flex flex-1 shrink-0 text-2xl font-normal leading-tight text-neutral-800 md:text-3xl">
-          Stewards Proposals
-        </h1>
+        <div className="flex flex-col gap-y-2">
+          <h1 className="text-2xl font-normal leading-tight text-neutral-800 md:text-3xl">Stewards Proposals</h1>
+          <p className="text-sm leading-relaxed text-neutral-500">
+            Proposals from the Stewards, with community veto oversight.
+          </p>
+        </div>
         <div className="justify-self-end">
           <Link href="#/stewards/new">
             <Button
@@ -76,7 +79,7 @@ export default function Proposals() {
         </div>
       </SectionView>
 
-      <If true={proposalCount}>
+      <If true={isLoading || isError || proposalCount}>
         <Then>
           <DataListRoot
             entityLabel={entityLabel}
@@ -89,7 +92,7 @@ export default function Proposals() {
                 .reverse()
                 ?.map((proposalIndex) => <ProposalCard key={proposalIndex} proposalIndex={proposalIndex} />)}
             </DataListContainer>
-            <DataListPagination />
+            {proposalCount > DEFAULT_PAGE_SIZE && <DataListPagination />}
           </DataListRoot>
         </Then>
         <Else>
@@ -105,5 +108,5 @@ export default function Proposals() {
 }
 
 function SectionView({ children }: { children: ReactNode }) {
-  return <div className="flex w-full flex-row content-center justify-between">{children}</div>;
+  return <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">{children}</div>;
 }

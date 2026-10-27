@@ -8,7 +8,7 @@ import * as Signer from "@ucanto/principal/ed25519";
 import { StoreMemory } from "@web3-storage/access/stores/store-memory";
 import * as Proof from "@web3-storage/w3up-client/proof";
 
-const IPFS_FETCH_TIMEOUT = 1000; // 1 second
+const IPFS_FETCH_TIMEOUT = 5_000;
 const UPLOAD_FILE_NAME = PUB_APP_NAME.toLowerCase().trim().replaceAll(" ", "-") + ".json";
 
 export function fetchIpfsAsJson(ipfsUri: string) {
@@ -84,25 +84,39 @@ async function fetchRawIpfs(ipfsUri: string): Promise<Response> {
     if (!ipfsUri) throw new Error("Invalid IPFS URI");
   }
 
-  const uriPrefixes = PUB_IPFS_ENDPOINTS.split(",").filter((uri) => !!uri.trim());
+  const uriPrefixes = PUB_IPFS_ENDPOINTS.split(",")
+    .map((uri) => uri.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
   if (!uriPrefixes.length) throw new Error("No available IPFS endpoints to fetch from");
 
   const cid = resolvePath(ipfsUri);
+  let lastError: unknown;
 
   for (const uriPrefix of uriPrefixes) {
     const controller = new AbortController();
     const abortId = setTimeout(() => controller.abort(), IPFS_FETCH_TIMEOUT);
-    const response = await fetch(`${uriPrefix}/${cid}`, {
-      method: "GET",
-      signal: controller.signal,
-    });
-    clearTimeout(abortId);
-    if (!response.ok) continue;
+    try {
+      const response = await fetch(`${uriPrefix}/${cid}`, {
+        method: "GET",
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        lastError = new Error(`${uriPrefix} responded with HTTP ${response.status}`);
+        continue;
+      }
 
-    return response; // .json(), .text(), .blob(), etc.
+      return response; // .json(), .text(), .blob(), etc.
+    } catch (error) {
+      // A gateway can fail due to a timeout, CORS, DNS, or another network
+      // problem. Continue with the next configured gateway in every case.
+      lastError = error;
+    } finally {
+      clearTimeout(abortId);
+    }
   }
 
-  throw new Error("Could not connect to any of the IPFS endpoints");
+  const reason = lastError instanceof Error ? `: ${lastError.message}` : "";
+  throw new Error(`Could not connect to any of the IPFS endpoints${reason}`);
 }
 
 function resolvePath(uri: string) {

@@ -1,18 +1,30 @@
-import { CardCollapsible, DocumentParser, Heading } from "@aragon/gov-ui-kit";
+import { Card, CardCollapsible, DocumentParser, Heading } from "@aragon/gov-ui-kit";
 import classNames from "classnames";
 
 interface IBodySectionProps {
   body: string;
+  isLoading?: boolean;
 }
 
 export const BodySection: React.FC<IBodySectionProps> = (props) => {
-  let { body } = props;
+  const { body, isLoading = false } = props;
 
-  if (!body.trim() || body === "<p></p>") body = "No description was provided";
+  if (!body.trim() || body.trim() === "<p></p>") {
+    return (
+      <Card className="flex flex-col gap-y-3 p-6 shadow-neutral">
+        <Heading size="h2">Proposal description</Heading>
+        <p className="text-base leading-relaxed text-neutral-500" role="status">
+          {isLoading
+            ? "The original proposal text is being retrieved. You can already review the voting results and actions below."
+            : "The original proposal text is currently unavailable. Voting results and on-chain actions are preserved below."}
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <CardCollapsible
-      buttonLabelClosed="Expend description"
+      buttonLabelClosed="Expand description"
       buttonLabelOpened="Read less"
       collapsedSize="md"
       className="w-full shadow-neutral"

@@ -5,6 +5,7 @@ import { Proposal, VoteCastEvent } from "../utils/types";
 import { usePublicClient } from "wagmi";
 import { PUB_TOKEN_VOTING_PLUGIN_ADDRESS } from "@/constants";
 import { useChainIdTypesafe } from "@/utils/chains";
+import { getProposalEventArgs } from "@/utils/proposal-events";
 
 const event = getAbiItem({ abi: TokenVotingPluginAbi, name: "VoteCast" });
 
@@ -18,22 +19,19 @@ export function useProposalVoteList(proposalId: number, proposal: Proposal | nul
     //if (!proposal?.parameters?.snapshotBlock) return;
     if (!publicClient) return;
 
-    const logs = await publicClient.getLogs({
+    const logs = await getProposalEventArgs<VoteCastEvent>({
+      publicClient,
+      chainId,
+      event,
       address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
-      event: event,
-      args: {
-        proposalId: BigInt(proposalId),
-      },
-      fromBlock: 0n,
-      toBlock: "latest", // TODO: Make this variable between 'latest' and proposal last block
+      proposalId: BigInt(proposalId),
     });
 
-    const newLogs = logs.flatMap((log) => log.args);
-    if (newLogs.length > proposalLogs.length) setLogs(newLogs);
+    if (logs.length > proposalLogs.length) setLogs(logs);
   }
 
   useEffect(() => {
-    getLogs();
+    getLogs().catch((error) => console.error(`Could not fetch votes for proposal ${proposalId}.`, error));
   }, [proposalId, proposal?.parameters?.snapshotEpoch, chainId]);
 
   return proposalLogs;

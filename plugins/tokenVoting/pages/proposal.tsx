@@ -1,6 +1,6 @@
 import { useProposal } from "../hooks/useProposal";
 import ProposalHeader from "../components/proposal/header";
-import { PleaseWaitSpinner } from "@/components/please-wait";
+import { ProposalLoadState } from "@/components/proposal/proposalLoadState";
 import { useProposalVoting } from "../hooks/useProposalVoting";
 import { useProposalExecute } from "../hooks/useProposalExecute";
 import { BodySection } from "@/components/proposal/proposalBodySection";
@@ -11,7 +11,7 @@ import { useProposalStatus } from "../hooks/useProposalVariantStatus";
 import dayjs from "dayjs";
 import { ProposalActions } from "@/components/proposalActions/proposalActions";
 import { CardResources } from "@/components/proposal/cardResources";
-import { formatEther, formatUnits } from "viem";
+import { formatEther } from "viem";
 import { useToken } from "../hooks/useToken";
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogRoot, ProposalStatus } from "@aragon/gov-ui-kit";
 import { useCanVote } from "../hooks/useCanVote";
@@ -21,6 +21,7 @@ import { useProposalVoteList } from "../hooks/useProposalVoteList";
 import { usePastSupply } from "../hooks/usePastSupply";
 import { useProposalRewards } from "@/hooks/useProposalRewards";
 import { useChainIdTypesafe } from "@/utils/chains";
+import { ProposalDetails } from "@/components/proposal/proposalDetails";
 
 const ABSTAIN_VALUE = 1;
 const VOTE_YES_VALUE = 2;
@@ -38,7 +39,6 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
 
   const pastSupply = usePastSupply(proposal?.parameters.snapshotEpoch);
 
-  const showProposalLoading = getShowProposalLoading(proposal, proposalFetchStatus);
   const proposalStatus = useProposalStatus(proposal!);
 
   const startDate = dayjs(Number(proposal?.parameters.startDate) * 1000).toString();
@@ -142,10 +142,10 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
     },
   ];
 
-  if (!proposal || showProposalLoading) {
+  if (!proposal) {
     return (
-      <section className="justify-left items-left flex w-screen min-w-full max-w-full">
-        <PleaseWaitSpinner />
+      <section className="mx-auto w-full max-w-screen-xl px-4 py-10 md:px-16">
+        <ProposalLoadState error={proposalFetchStatus.proposalError} />
       </section>
     );
   }
@@ -157,17 +157,32 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
       <div className="mx-auto w-full max-w-screen-xl px-4 py-6 md:px-16 md:pb-20 md:pt-10">
         <div className="flex w-full flex-col gap-x-12 gap-y-6 md:flex-row">
           <div className="flex flex-col gap-y-6 md:w-[63%] md:shrink-0">
-            <BodySection body={proposal.description || "No description was provided"} />
+            <BodySection body={proposal.description} isLoading={proposalFetchStatus.metadataLoading} />
             <ProposalVoting
               totalReward={proposalRewardsResult}
               stages={proposalStage}
               description="Proposals approved by the community become executable when the support ratio is above the threshold and the minimum participation is met."
               isVeto={false}
             />
-            <ProposalActions actions={proposal.actions} />
+            <ProposalActions
+              actions={proposal.actions}
+              description={
+                proposal.executed
+                  ? "These actions were executed by the DAO when this proposal passed."
+                  : "These are the on-chain actions included in this proposal."
+              }
+            />
           </div>
           <div className="flex flex-col gap-y-6 md:w-[33%]">
-            <CardResources resources={proposal.resources} title="Resources" />
+            <ProposalDetails
+              index={proposalIdx}
+              group="Community"
+              creator={proposal.creator}
+              startDate={proposal.parameters.startDate}
+              endDate={proposal.parameters.endDate}
+              actionCount={proposal.actions.length}
+            />
+            {proposal.resources.length > 0 && <CardResources resources={proposal.resources} title="Resources" />}
           </div>
         </div>
       </div>
@@ -210,14 +225,3 @@ export const VoteOptionDialog: React.FC<{ show: boolean; onClose: (voteOption: n
     </DialogRoot>
   );
 };
-
-function getShowProposalLoading(
-  proposal: ReturnType<typeof useProposal>["proposal"],
-  status: ReturnType<typeof useProposal>["status"]
-) {
-  if (!proposal && status.proposalLoading) return true;
-  else if (status.metadataLoading && !status.metadataError) return true;
-  else if (!proposal?.title && !status.metadataError) return true;
-
-  return false;
-}

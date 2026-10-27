@@ -1,29 +1,17 @@
-import { useState, useEffect } from "react";
-import { useBlockNumber, usePublicClient, useReadContract } from "wagmi";
-import { Address, Hex, fromHex, getAbiItem } from "viem";
-import { ProposalMetadata, type RawAction, type DecodedAction } from "@/utils/types";
+import { useEffect } from "react";
+import { useBlockNumber, useReadContract } from "wagmi";
+import { getAbiItem } from "viem";
+import { ProposalMetadata, type RawAction } from "@/utils/types";
 import {
   type OptimisticProposal,
   type OptimisticProposalParameters,
   type OptimisticProposalResultType,
 } from "@/plugins/optimistic-proposals/utils/types";
 import { PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS } from "@/constants";
-import { useMetadata } from "@/hooks/useMetadata";
+import { useProposalMetadata } from "@/hooks/useProposalMetadata";
 import { OptimisticTokenVotingPluginAbi } from "../artifacts/OptimisticTokenVotingPlugin.sol";
 import { parseProposalId } from "../utils/proposal-id";
 import { useChainIdTypesafe } from "@/utils/chains";
-
-type ProposalCreatedLogResponse = {
-  args: {
-    actions: RawAction[];
-    allowFailureMap: bigint;
-    creator: Address;
-    endDate: bigint;
-    startDate: bigint;
-    metadata: Hex;
-    proposalId: bigint;
-  };
-};
 
 const ProposalCreatedEvent = getAbiItem({
   abi: OptimisticTokenVotingPluginAbi,
@@ -31,9 +19,6 @@ const ProposalCreatedEvent = getAbiItem({
 });
 
 export function useProposal(proposalId?: bigint, autoRefresh = false) {
-  const publicClient = usePublicClient();
-  const [proposalCreationEvent, setProposalCreationEvent] = useState<ProposalCreatedLogResponse["args"]>();
-  const [metadataUri, setMetadataUri] = useState<string>();
   const { data: blockNumber } = useBlockNumber({ watch: true });
   const chainId = useChainIdTypesafe();
 
@@ -57,41 +42,17 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
     if (autoRefresh) proposalRefetch();
   }, [blockNumber, chainId]);
 
-  // Creation event
-  useEffect(() => {
-    if (proposalId === undefined || !proposalData || !publicClient) return;
-
-    publicClient
-      .getLogs({
-        address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
-        event: ProposalCreatedEvent,
-        args: {
-          proposalId: BigInt(proposalId),
-        },
-        //fromBlock: proposalData.parameters.snapshotBlock,
-        // TODO can we somehow get the from/to blocks from the proposalData?
-        fromBlock: BigInt(0),
-        // toBlock: proposalData.parameters.startDate,
-        toBlock: "latest",
-      })
-      .then((logs) => {
-        if (!logs || !logs.length) throw new Error("No creation logs");
-
-        const log: ProposalCreatedLogResponse = logs[0] as any;
-        setProposalCreationEvent(log.args);
-        setMetadataUri(fromHex(log.args.metadata as Hex, "string"));
-      })
-      .catch((err) => {
-        console.error("Could not fetch the proposal details", err);
-      });
-  }, [proposalId, !!proposalData, chainId]);
-
-  // JSON metadata
   const {
+    creationEvent: proposalCreationEvent,
     data: metadataContent,
     isLoading: metadataLoading,
     error: metadataError,
-  } = useMetadata<ProposalMetadata>(metadataUri);
+  } = useProposalMetadata({
+    address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
+    chainId,
+    event: ProposalCreatedEvent,
+    proposalId,
+  });
 
   const proposal = arrangeProposalData(proposalId, proposalData, proposalCreationEvent, metadataContent);
   return {
@@ -103,7 +64,7 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
       proposalError,
       metadataReady: !metadataError && !metadataLoading && !!metadataContent,
       metadataLoading,
-      metadataError: metadataError !== undefined,
+      metadataError: !!metadataError,
     },
   };
 }
@@ -128,7 +89,7 @@ function decodeProposalResultData(data?: OptimisticProposalResultType) {
 function arrangeProposalData(
   proposalId?: bigint,
   proposalData?: ReturnType<typeof decodeProposalResultData>,
-  creationEvent?: ProposalCreatedLogResponse["args"],
+  creationEvent?: { creator: string },
   metadata?: ProposalMetadata
 ): OptimisticProposal | null {
   if (!proposalData || proposalId === undefined) return null;
