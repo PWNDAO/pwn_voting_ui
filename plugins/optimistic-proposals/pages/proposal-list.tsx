@@ -87,7 +87,15 @@ export default function Proposals() {
             pageSize={DEFAULT_PAGE_SIZE}
             state={dataListState}
           >
-            <DataListContainer style={{ rowGap: "1rem" }} SkeletonElement={ProposalDataListItemSkeleton}>
+            <DataListContainer
+              style={{ rowGap: "1rem" }}
+              SkeletonElement={ProposalDataListItemSkeleton}
+              errorState={{
+                heading: "Unable to load proposals",
+                description: "We couldn't connect to the selected network. Please try again.",
+                primaryButton: { label: "Try again", onClick: () => refetch() },
+              }}
+            >
               {Array.from(Array(proposalCount || 0)?.keys())
                 .reverse()
                 ?.map((proposalIndex) => <ProposalCard key={proposalIndex} proposalIndex={proposalIndex} />)}
