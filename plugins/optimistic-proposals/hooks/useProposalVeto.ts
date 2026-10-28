@@ -7,7 +7,12 @@ import { useTransactionManager } from "@/hooks/useTransactionManager";
 import { useChainIdTypesafe } from "@/utils/chains";
 
 export function useProposalVeto(proposalIndex: number) {
-  const { proposal, status: proposalFetchStatus, refetch: refetchProposal } = useProposal(BigInt(proposalIndex), true);
+  const {
+    proposal,
+    status: proposalFetchStatus,
+    refetch: refetchProposal,
+    retryMetadata,
+  } = useProposal(BigInt(proposalIndex), true);
   const vetoes = useProposalVetoes(BigInt(proposalIndex));
   const { canVeto, refetch: refetchCanVeto } = useUserCanVeto(BigInt(proposalIndex));
   const chainId = useChainIdTypesafe();
@@ -38,6 +43,7 @@ export function useProposalVeto(proposalIndex: number) {
 
   return {
     proposal,
+    retryMetadata,
     proposalFetchStatus,
     vetoes,
     canVeto: !!canVeto,

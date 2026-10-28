@@ -1,3 +1,13 @@
+## Production RPC reliability
+
+Ethereum reads use `NEXT_PUBLIC_ETHEREUM_RPC_URL`, with PublicNode as a fallback when the configured provider is unavailable or rate limited. Failed providers are paused for 60 seconds; individual HTTP requests time out after 5 seconds and are not retried before failing over. Requests are batched, proposal counts refresh every minute, and unexecuted proposals refresh every 30 seconds while the tab is visible. Executed proposals do not poll. Public RPCs are a best-effort backup, not a replacement for monitoring the primary provider's quota and availability.
+
+If Alchemy returns HTTP 429, check the app/account throughput and usage limits in its dashboard. A browser may report this as a CORS error when the error response lacks CORS headers. Also verify that `https://governance.pwn.xyz` is allowed if an origin allowlist is configured. Update the GitHub Actions RPC secret and rebuild to change the primary URL: this is a static export, so runtime environment changes alone do not update the browser bundle. Never commit the API key or paste it into logs/issues.
+
+A configured Sepolia endpoint may point to a Tenderly fork, so it deliberately does not fail over to real Sepolia. Without a configured endpoint, public Sepolia is used.
+
+The nine unavailable original mainnet proposal metadata URIs are listed in `utils/historical-metadata.ts`. Only their automatic IPFS fetches are disabled, to avoid known-failing gateway requests during browsing. Proposal details still offer an explicit "Try loading original text" action if the content is re-pinned. Other metadata and new proposals load normally. This does not restore or invent the original text. Remove a URI from the list when its content becomes reliably available again.
+
 ## Steps for testing
 
 1. In your wallet, set the RPC URL for Sepolia network to Tenderly fork. This makes sure that we use the forked Sepolia network, where we can e.g. move forward time to test accepting proposals and other scenarios easily without needing to wait x days.

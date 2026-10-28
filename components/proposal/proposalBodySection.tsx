@@ -1,13 +1,14 @@
-import { Card, CardCollapsible, DocumentParser, Heading } from "@aragon/gov-ui-kit";
+import { Button, Card, CardCollapsible, DocumentParser, Heading } from "@aragon/gov-ui-kit";
 import classNames from "classnames";
 
 interface IBodySectionProps {
   body: string;
   isLoading?: boolean;
+  onRetry?: () => void;
 }
 
 export const BodySection: React.FC<IBodySectionProps> = (props) => {
-  const { body, isLoading = false } = props;
+  const { body, isLoading = false, onRetry } = props;
 
   if (!body.trim() || body.trim() === "<p></p>") {
     return (
@@ -18,6 +19,11 @@ export const BodySection: React.FC<IBodySectionProps> = (props) => {
             ? "The original proposal text is being retrieved. You can already review the voting results and actions below."
             : "The original proposal text is currently unavailable. Voting results and on-chain actions are preserved below."}
         </p>
+        {!isLoading && onRetry && (
+          <Button size="sm" variant="secondary" onClick={onRetry} className="self-start">
+            Try loading original text
+          </Button>
+        )}
       </Card>
     );
   }
