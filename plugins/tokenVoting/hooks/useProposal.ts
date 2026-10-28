@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useBlockNumber, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
 import { getAbiItem } from "viem";
 import { TokenVotingPluginAbi } from "@/plugins/tokenVoting/artifacts/TokenVoting.sol";
 import { RawAction, ProposalMetadata } from "@/utils/types";
@@ -13,8 +12,7 @@ const ProposalCreatedEvent = getAbiItem({
   name: "ProposalCreated",
 });
 
-export function useProposal(proposalId: number, autoRefresh = false) {
-  const { data: blockNumber } = useBlockNumber();
+export function useProposal(proposalId: number, autoRefresh = true) {
   const chainId = useChainIdTypesafe();
 
   // Proposal on-chain data
@@ -22,19 +20,17 @@ export function useProposal(proposalId: number, autoRefresh = false) {
     data: proposalResult,
     error: proposalError,
     fetchStatus: proposalFetchStatus,
-    refetch: proposalRefetch,
   } = useReadContract({
     address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
     chainId,
     abi: TokenVotingPluginAbi,
     functionName: "getProposal",
     args: [BigInt(proposalId)],
+    query: {
+      refetchInterval: (query) => (autoRefresh && !query.state.data?.[1] ? 30_000 : false),
+    },
   });
   const proposalData = decodeProposalResultData(proposalResult as any);
-
-  useEffect(() => {
-    if (autoRefresh) proposalRefetch();
-  }, [blockNumber, chainId]);
 
   const {
     creationEvent: proposalCreationEvent,
@@ -53,8 +49,8 @@ export function useProposal(proposalId: number, autoRefresh = false) {
   return {
     proposal,
     status: {
-      proposalReady: proposalFetchStatus === "idle",
-      proposalLoading: proposalFetchStatus === "fetching",
+      proposalReady: !!proposalResult,
+      proposalLoading: !proposalResult && proposalFetchStatus === "fetching",
       proposalError,
       metadataReady: !metadataError && !metadataLoading && !!metadataContent,
       metadataLoading,
