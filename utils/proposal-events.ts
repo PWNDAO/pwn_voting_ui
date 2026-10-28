@@ -90,14 +90,18 @@ async function getProposalEventHistoryFromBlockscout<TArgs>({
 }: ProposalEventRequest): Promise<TArgs[]> {
   const result: TArgs[] = [];
   let nextPageParams: BlockscoutResponse["next_page_params"] = null;
+  const topic = toEventSelector(event);
 
   do {
-    const params = new URLSearchParams({ topic: toEventSelector(event) });
+    // Blockscout's topic filter can return 500 for valid VoteCast histories.
+    // Read the contract's paginated logs and filter locally instead.
+    const params = new URLSearchParams();
     for (const [key, value] of Object.entries(nextPageParams || {})) params.set(key, value.toString());
 
     const url = `${BLOCKSCOUT_API_URL[chainId]}/addresses/${address}/logs?${params}`;
     const payload = await fetchBlockscoutPage(url);
     for (const log of payload.items) {
+      if (log.topics[0]?.toLowerCase() !== topic.toLowerCase()) continue;
       const topics = log.topics.filter((topic): topic is Hex => topic !== null) as [Hex, ...Hex[]];
       const decoded = decodeEventLog({
         abi: [event],

@@ -15,7 +15,9 @@ function isUnavailable(error: unknown): boolean {
   if (cause instanceof TimeoutError) return true;
   if (cause instanceof HttpRequestError) {
     // Browsers hide the status of CORS failures, including some rate-limit responses.
-    return !cause.status || [401, 403, 408, 429].includes(cause.status) || cause.status >= 500;
+    // A 403 can be method-specific (e.g. public RPCs restrict archive getLogs).
+    // Fail over that request, but keep the provider available for normal reads.
+    return !cause.status || [401, 408, 429].includes(cause.status) || cause.status >= 500;
   }
   return cause instanceof RpcRequestError && [429, -32005].includes(cause.code);
 }

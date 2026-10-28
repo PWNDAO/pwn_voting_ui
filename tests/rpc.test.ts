@@ -23,7 +23,7 @@ function client() {
 }
 
 describe("RPC failover", () => {
-  test.each([429, 403, 503])("fails over immediately on HTTP %i and pauses the failing endpoint", async (status) => {
+  test.each([429, 401, 503])("fails over immediately on HTTP %i and pauses the failing endpoint", async (status) => {
     const fetchMock = mock(async (url: RequestInfo | URL, init?: RequestInit) =>
       String(url) === primaryUrl ? new Response("Unavailable", { status }) : success(init)
     );
@@ -31,6 +31,35 @@ describe("RPC failover", () => {
     const rpc = client();
 
     expect(await rpc.getChainId()).toBe(1);
+    expect(await rpc.getChainId()).toBe(1);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([primaryUrl, fallbackUrl, fallbackUrl]);
+  });
+
+  test("does not pause a healthy provider when a particular request is forbidden", async () => {
+    let forbidden = true;
+    const fetchMock = mock(async (url: RequestInfo | URL, init?: RequestInit) =>
+      String(url) === primaryUrl && forbidden ? new Response("Forbidden method", { status: 403 }) : success(init)
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const rpc = client();
+    expect(await rpc.getChainId()).toBe(1);
+    forbidden = false;
+    expect(await rpc.getChainId()).toBe(1);
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([primaryUrl, fallbackUrl, primaryUrl]);
+  });
+
+  test("a restricted archive lookup on the backup does not block subsequent proposal reads", async () => {
+    const fetchMock = mock(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url) === primaryUrl) return new Response("Rate limited", { status: 429 });
+      const requests = JSON.parse(init?.body as string) as { method: string }[];
+      if (requests.some(({ method }) => method === "eth_getLogs")) {
+        return new Response("Archive range forbidden", { status: 403 });
+      }
+      return success(init);
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const rpc = client();
+    await expect(rpc.getLogs({ fromBlock: 1n, toBlock: "latest" })).rejects.toThrow();
     expect(await rpc.getChainId()).toBe(1);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([primaryUrl, fallbackUrl, fallbackUrl]);
   });
