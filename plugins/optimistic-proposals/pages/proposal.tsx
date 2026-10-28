@@ -25,6 +25,7 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
     vetoes,
     isConfirming: isConfirmingVeto,
     vetoProposal,
+    retryMetadata,
   } = useProposalVeto(proposalIdx);
   const { symbol: tokenSymbol } = useToken();
 
@@ -112,7 +113,11 @@ export default function ProposalDetail({ index: proposalIdx }: { index: number }
       <div className="mx-auto w-full max-w-screen-xl px-4 py-6 md:px-16 md:pb-20 md:pt-10">
         <div className="flex w-full flex-col gap-x-12 gap-y-6 md:flex-row">
           <div className="flex flex-col gap-y-6 md:w-[63%] md:shrink-0">
-            <BodySection body={proposal.description} isLoading={proposalFetchStatus.metadataLoading} />
+            <BodySection
+              body={proposal.description}
+              isLoading={proposalFetchStatus.metadataLoading}
+              onRetry={retryMetadata}
+            />
             <ProposalVoting
               stages={proposalStage}
               description="Proposals proposed by the Stewards become eventually executable, unless the community reaches the veto threshold during the community veto stage."

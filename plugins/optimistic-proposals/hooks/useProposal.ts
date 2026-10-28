@@ -45,6 +45,7 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
     data: metadataContent,
     isLoading: metadataLoading,
     error: metadataError,
+    retryMetadata,
   } = useProposalMetadata({
     address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
     chainId,
@@ -56,6 +57,7 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
   return {
     proposal,
     refetch: proposalRefetch,
+    retryMetadata,
     status: {
       proposalReady: !!proposalResult,
       proposalLoading: !proposalResult && proposalFetchStatus === "fetching",

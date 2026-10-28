@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 export interface INavLink {
   path: string;
@@ -15,9 +16,12 @@ interface INavLinkProps extends INavLink {
 
 export const NavLink: React.FC<INavLinkProps> = (props) => {
   const { id, name, path, onClick, isExternal } = props;
-  const { asPath } = useRouter();
-  const pathToCheck = asPath === "/" ? "/#/stewards" : asPath;
-  const isSelected = pathToCheck.includes(path);
+  const { asPath, isReady } = useRouter();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  // The exported HTML cannot know the hash. Do not bake a Stewards selection
+  // into it: React may preserve those server attributes during hydration.
+  const isSelected = hydrated && isReady && asPath.includes(path);
 
   const anchorClasses = classNames(
     "w-full py-3 transition-colors duration-75", // base styles

@@ -37,6 +37,7 @@ export function useProposal(proposalId: number, autoRefresh = true) {
     data: metadataContent,
     isLoading: metadataLoading,
     error: metadataError,
+    retryMetadata,
   } = useProposalMetadata({
     address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
     chainId,
@@ -48,6 +49,7 @@ export function useProposal(proposalId: number, autoRefresh = true) {
 
   return {
     proposal,
+    retryMetadata,
     status: {
       proposalReady: !!proposalResult,
       proposalLoading: !proposalResult && proposalFetchStatus === "fetching",

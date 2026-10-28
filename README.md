@@ -6,6 +6,8 @@ If Alchemy returns HTTP 429, check the app/account throughput and usage limits i
 
 A configured Sepolia endpoint may point to a Tenderly fork, so it deliberately does not fail over to real Sepolia. Without a configured endpoint, public Sepolia is used.
 
+The nine unavailable original mainnet proposal metadata URIs are listed in `utils/historical-metadata.ts`. Only their automatic IPFS fetches are disabled, to avoid known-failing gateway requests during browsing. Proposal details still offer an explicit "Try loading original text" action if the content is re-pinned. Other metadata and new proposals load normally. This does not restore or invent the original text. Remove a URI from the list when its content becomes reliably available again.
+
 ## Steps for testing
 
 1. In your wallet, set the RPC URL for Sepolia network to Tenderly fork. This makes sure that we use the forked Sepolia network, where we can e.g. move forward time to test accepting proposals and other scenarios easily without needing to wait x days.

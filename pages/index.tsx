@@ -6,48 +6,51 @@ import { plugins } from "@/plugins";
 import { MainSection } from "@/components/layout/main-section";
 
 const PluginLoader: FC = () => {
-  const { asPath } = useRouter();
   const router = useRouter();
-  const [PageComponent, setPageComponent] = useState<FC | null>(null);
+  const { asPath, isReady } = router;
+  const pluginId = asPath.startsWith("/#/") ? asPath.split("/")[2] : undefined;
+  const plugin = plugins.find((p) => p.id === pluginId);
+  const [loadedPage, setLoadedPage] = useState<{ id: string; Component: FC } | null>(null);
   const [componentLoading, setComponentLoading] = useState(true);
 
   useEffect(() => {
-    let pluginIdOrDefault;
-    if (asPath === "/" || asPath.startsWith("/#/")) {
-      if (asPath === "/" || asPath === "/#/") {
-        router.push("/#/stewards/");
-        return;
-      } else {
-        pluginIdOrDefault = asPath.split("/")[2]; // ["", "#", "[plugin_name]"]
-      }
-    } else {
-      throw new Error(
-        `Unknown route specified: ${asPath}, route should be either #/ or #/community-voting/[action] or #/stewards/[action].`
-      );
-    }
-
-    const plugin = plugins.find((p) => p.id === pluginIdOrDefault);
-    if (!plugin) {
-      // eslint-disable-next-line no-console
-      console.error(`In URL Routing: no plugin has been found under name ${pluginIdOrDefault}.`);
+    // A static export initially reports "/" even when the browser has a hash.
+    // Do not redirect or start an import until hydration has restored the URL.
+    if (!isReady) return;
+    if (asPath === "/" || asPath === "/#" || asPath === "/#/") {
+      void router.replace("/#/stewards");
       return;
     }
 
-    // TODO do we need this import here if we have all under hash based routing?
+    if (!plugin) {
+      setLoadedPage(null);
+      setComponentLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setComponentLoading(true);
     import(`@/plugins/${plugin.folderName}`)
       .then((mod) => {
-        setComponentLoading(true);
-        setPageComponent(() => mod.default);
+        if (cancelled) return;
+        setLoadedPage({ id: plugin.id, Component: mod.default });
+        setComponentLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         // eslint-disable-next-line no-console
         console.error("Failed to load the page component", err);
+        setLoadedPage(null);
         setComponentLoading(false);
       });
-  }, [asPath]);
+    // A slower import for a previous route must never replace the current page.
+    return () => {
+      cancelled = true;
+    };
+  }, [asPath, isReady, plugin, router]);
 
-  if (!PageComponent) {
-    if (componentLoading) {
+  if (!isReady || !loadedPage || loadedPage.id !== pluginId) {
+    if (!isReady || componentLoading || (!!loadedPage && loadedPage.id !== pluginId)) {
       return (
         <MainSection>
           <div className="flex h-24 w-full items-center justify-center">
@@ -59,6 +62,7 @@ const PluginLoader: FC = () => {
     return <NotFound />;
   }
 
+  const PageComponent = loadedPage.Component;
   return <PageComponent />;
 };
 
