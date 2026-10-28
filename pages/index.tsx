@@ -4,18 +4,19 @@ import { PleaseWaitSpinner } from "@/components/please-wait";
 import { NotFound } from "@/components/not-found";
 import { plugins } from "@/plugins";
 import { MainSection } from "@/components/layout/main-section";
+import { useHashPath } from "@/hooks/useHashPath";
 
 const PluginLoader: FC = () => {
   const router = useRouter();
-  const { asPath, isReady } = router;
-  const pluginId = asPath.startsWith("/#/") ? asPath.split("/")[2] : undefined;
+  const asPath = useHashPath();
+  const isReady = asPath !== null;
+  const pluginId = asPath?.startsWith("/#/") ? asPath.split("/")[2] : undefined;
   const plugin = plugins.find((p) => p.id === pluginId);
   const [loadedPage, setLoadedPage] = useState<{ id: string; Component: FC } | null>(null);
   const [componentLoading, setComponentLoading] = useState(true);
 
   useEffect(() => {
-    // A static export initially reports "/" even when the browser has a hash.
-    // Do not redirect or start an import until hydration has restored the URL.
+    // Wait for the actual browser hash; the static export cannot know it.
     if (!isReady) return;
     if (asPath === "/" || asPath === "/#" || asPath === "/#/") {
       void router.replace("/#/stewards");

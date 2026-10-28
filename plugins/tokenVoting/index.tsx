@@ -2,7 +2,7 @@ import { NotFound } from "@/components/not-found";
 import ProposalCreate from "./pages/new";
 import ProposalList from "./pages/proposal-list";
 import ProposalDetail from "./pages/proposal";
-import { useRouter } from "next/router";
+import { useHashPath } from "@/hooks/useHashPath";
 
 export function getTokenVotingSubpage(urlAsPath: string) {
   let pluginSubPage = urlAsPath.slice("/#/community-voting".length);
@@ -22,6 +22,6 @@ export function getTokenVotingSubpage(urlAsPath: string) {
 }
 
 export default function PluginPage() {
-  const { asPath } = useRouter();
-  return getTokenVotingSubpage(asPath);
+  const asPath = useHashPath();
+  return asPath ? getTokenVotingSubpage(asPath) : null;
 }
