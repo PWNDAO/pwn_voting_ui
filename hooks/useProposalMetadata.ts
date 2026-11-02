@@ -5,6 +5,7 @@ import { useMetadata } from "@/hooks/useMetadata";
 import { getProposalCreatedEvent } from "@/utils/proposal-events";
 import type { ChainId } from "@/utils/chains";
 import type { ProposalMetadata } from "@/utils/types";
+import { isUnavailableHistoricalMetadata } from "@/utils/historical-metadata";
 
 export function useProposalMetadata({
   address,
@@ -29,7 +30,17 @@ export function useProposalMetadata({
     retry: 1,
   });
   const metadataUri = creationEvent?.metadata ? fromHex(creationEvent.metadata, "string") : undefined;
-  const metadata = useMetadata<ProposalMetadata>(metadataUri);
+  const metadata = useMetadata<ProposalMetadata>(metadataUri, {
+    enabled: !isUnavailableHistoricalMetadata(chainId, metadataUri),
+  });
 
-  return { creationEvent, ...metadata };
+  return {
+    creationEvent,
+    ...metadata,
+    retryMetadata: metadataUri
+      ? () => {
+          void metadata.refetch();
+        }
+      : undefined,
+  };
 }

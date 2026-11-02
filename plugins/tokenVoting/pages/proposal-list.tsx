@@ -1,5 +1,5 @@
-import { useAccount, useBlockNumber, useReadContract } from "wagmi";
-import { type ReactNode, useEffect } from "react";
+import { useAccount, useReadContract } from "wagmi";
+import { type ReactNode } from "react";
 import ProposalCard from "../components/proposal";
 import { TokenVotingPluginAbi } from "../artifacts/TokenVoting.sol";
 import {
@@ -26,36 +26,29 @@ const img = "/images/empty.png";
 export default function Proposals() {
   const { isConnected } = useAccount();
   const canCreate = useCanCreateProposal();
-  const { data: blockNumber } = useBlockNumber({ watch: true });
   const chainId = useChainIdTypesafe();
 
   const {
     data: proposalCountResponse,
     error: isError,
     isLoading,
-    isFetching: isFetchingNextPage,
     refetch,
   } = useReadContract({
     address: PUB_TOKEN_VOTING_PLUGIN_ADDRESS[chainId],
     abi: TokenVotingPluginAbi,
     functionName: "proposalCount",
     chainId,
+    query: { refetchInterval: 60_000 },
   });
   const proposalCount = Number(proposalCountResponse ?? 0n);
-
-  useEffect(() => {
-    refetch();
-  }, [blockNumber, chainId]);
 
   const entityLabel = proposalCount === 1 ? "Proposal" : "Proposals";
 
   let dataListState: DataListState = "idle";
   if (isLoading && !proposalCount) {
     dataListState = "initialLoading";
-  } else if (isError) {
+  } else if (isError && proposalCountResponse === undefined) {
     dataListState = "error";
-  } else if (isFetchingNextPage) {
-    dataListState = "fetchingNextPage";
   }
 
   return (

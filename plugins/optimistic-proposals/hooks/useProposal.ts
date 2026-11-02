@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useBlockNumber, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
 import { getAbiItem } from "viem";
 import { ProposalMetadata, type RawAction } from "@/utils/types";
 import {
@@ -19,7 +18,6 @@ const ProposalCreatedEvent = getAbiItem({
 });
 
 export function useProposal(proposalId?: bigint, autoRefresh = false) {
-  const { data: blockNumber } = useBlockNumber({ watch: true });
   const chainId = useChainIdTypesafe();
 
   // Proposal onchain data
@@ -34,19 +32,20 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
     functionName: "getProposal",
     args: [proposalId ?? BigInt(0)],
     chainId,
+    query: {
+      enabled: proposalId !== undefined,
+      refetchInterval: (query) => (autoRefresh && !query.state.data?.[1] ? 30_000 : false),
+    },
   });
 
   const proposalData = decodeProposalResultData(proposalResult);
-
-  useEffect(() => {
-    if (autoRefresh) proposalRefetch();
-  }, [blockNumber, chainId]);
 
   const {
     creationEvent: proposalCreationEvent,
     data: metadataContent,
     isLoading: metadataLoading,
     error: metadataError,
+    retryMetadata,
   } = useProposalMetadata({
     address: PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS[chainId],
     chainId,
@@ -58,9 +57,10 @@ export function useProposal(proposalId?: bigint, autoRefresh = false) {
   return {
     proposal,
     refetch: proposalRefetch,
+    retryMetadata,
     status: {
-      proposalReady: proposalFetchStatus === "idle",
-      proposalLoading: proposalFetchStatus === "fetching",
+      proposalReady: !!proposalResult,
+      proposalLoading: !proposalResult && proposalFetchStatus === "fetching",
       proposalError,
       metadataReady: !metadataError && !metadataLoading && !!metadataContent,
       metadataLoading,

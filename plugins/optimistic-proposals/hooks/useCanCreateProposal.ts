@@ -1,5 +1,4 @@
 import { keccak256, toHex } from "viem";
-import { useState, useEffect } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import { DAO_ABI } from "@/artifacts/DAO.sol";
 import { PUB_DAO_ADDRESS, PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS } from "@/constants";
@@ -10,15 +9,9 @@ export function useCanCreateProposal() {
   const { address } = useAccount();
   const chainId = useChainIdTypesafe();
 
-  const [hasCreatePermission, setHasCreatePermission] = useState(false);
-
   // Check if PROPOSER_PERMISSION is granted to the current wallet
   // Note: only the stewards multisig (PUB_STEWARD_SAFE_MULTISIG_ADDRESS) has permission to create optimistic proposals
-  const {
-    data: hasCreatePermissionData,
-    refetch: hasCreatePermissionRefetch,
-    status: hasCreatePermissionStatus,
-  } = useReadContract({
+  const { data: hasCreatePermission } = useReadContract({
     chainId,
     address: PUB_DAO_ADDRESS[chainId],
     abi: DAO_ABI,
@@ -35,13 +28,5 @@ export function useCanCreateProposal() {
     },
   });
 
-  useEffect(() => {
-    setHasCreatePermission(!!hasCreatePermissionData);
-  }, [hasCreatePermissionStatus]);
-
-  useEffect(() => {
-    hasCreatePermissionRefetch();
-  }, [address, chainId]);
-
-  return address && hasCreatePermission;
+  return !!address && !!hasCreatePermission;
 }

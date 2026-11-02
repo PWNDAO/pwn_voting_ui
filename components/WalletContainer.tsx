@@ -1,21 +1,9 @@
-import { PUB_RPC_URL } from "@/constants";
+import { config } from "@/context/Web3Modal";
 import { formatHexString } from "@/utils/evm";
 import { useAppKit } from "@reown/appkit/react";
 import classNames from "classnames";
-import { createClient, http } from "viem";
-import { createConfig, useAccount, useEnsName } from "wagmi";
+import { useAccount, useEnsName } from "wagmi";
 import { mainnet } from "wagmi/chains";
-
-const config = createConfig({
-  chains: [mainnet],
-  ssr: true,
-  client({ chain }) {
-    return createClient({
-      chain,
-      transport: http(PUB_RPC_URL[1], { batch: true }),
-    });
-  },
-});
 
 // TODO: update with ODS wallet module - [https://linear.app/aragon/issue/RD-198/create-ods-walletmodule]
 const WalletContainer = () => {

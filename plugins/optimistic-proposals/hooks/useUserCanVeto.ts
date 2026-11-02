@@ -1,12 +1,10 @@
-import { useAccount, useBlockNumber, useReadContract } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { OptimisticTokenVotingPluginAbi } from "@/plugins/optimistic-proposals/artifacts/OptimisticTokenVotingPlugin.sol";
-import { useEffect } from "react";
 import { PUB_DUAL_GOVERNANCE_PLUGIN_ADDRESS } from "@/constants";
 import { useChainIdTypesafe } from "@/utils/chains";
 
 export function useUserCanVeto(proposalId?: bigint) {
   const { address } = useAccount();
-  const { data: blockNumber } = useBlockNumber({ watch: true });
   const chainId = useChainIdTypesafe();
 
   const { data: canVeto, refetch } = useReadContract({
@@ -16,15 +14,10 @@ export function useUserCanVeto(proposalId?: bigint) {
     functionName: "canVeto",
     args: [proposalId ?? BigInt(0), address!],
     query: {
-      enabled: !!address,
+      enabled: !!address && proposalId !== undefined,
+      refetchInterval: 30_000,
     },
   });
-
-  useEffect(() => {
-    if (Number(blockNumber) % 2 === 0) {
-      refetch();
-    }
-  }, [blockNumber, chainId]);
 
   return { canVeto, refetch };
 }
